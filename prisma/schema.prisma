@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Sosmed {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  url       String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  About     About?    @relation(fields: [aboutId], references: [id])
+  aboutId   String?
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  feature     String[]
+  technology  String[]
+  githubUrl   String
+  liveUrl     String
+  thumbnail   String
+  photo       String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  Skills      Skill[]   @relation("SkillOnProject")
+  About       About?    @relation(fields: [aboutId], references: [id])
+  aboutId     String?
+}
+
+model Skill {
+  id              String           @id @default(cuid())
+  name            String
+  icon            String
+  WorkExperiences WorkExperience[] @relation("SkillOnWorkExperience")
+  Projects        Project[]        @relation("SkillOnProject")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime?        @updatedAt
+  About           About[]          @relation("SkillOnAbout")
+}
+
+model WorkExperience {
+  id             String    @id @default(cuid())
+  position       String
+  employmenttype String
+  company        String
+  location       String
+  locationtype   String
+  description    String[]
+  startDate      DateTime
+  endDate        DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+  Skills         Skill[]   @relation("SkillOnWorkExperience")
+  About          About?    @relation(fields: [aboutId], references: [id])
+  aboutId        String?
+}
+
+model About {
+  id              String           @id @default(cuid())
+  name            String
+  jobTitle        String
+  introduction    String
+  profilePicture  String
+  sosmed          Sosmed[]
+  projects        Project[]
+  workExperiences WorkExperience[]
+  Skills          Skill[]          @relation("SkillOnAbout")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
