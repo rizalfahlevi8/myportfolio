@@ -40,16 +40,16 @@ export const projectSchema = z.object({
   slug: z.string()
     .min(1, "Slug is required")
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, alphanumeric, and hyphen-separated"),
-  tagline: z.string().min(1, "Tagline is required"),
-  description: z.string().min(1, "Description is required"),
+  tagline: z.string().trim().min(1, "Tagline is required").max(30, "Tagline maksimal 30 karakter"),
+  description: z.string().optional().nullable(), 
   category: z.string().min(1, "Category is required"),
   features: z.array(z.string().min(1, "Feature cannot be empty"))
     .min(1, "At least one feature is required"),
   libraries: z.array(z.string().min(1, "Library cannot be empty"))
     .min(1, "At least one library is required"),
-  background: z.string().min(1, "Background is required"),
-  solution: z.string().min(1, "Solution is required"),
-  challenge: z.string().min(1, "Challenge is required"),
+  background: z.string().optional().nullable(), 
+  solution: z.string().optional().nullable(), 
+  challenge: z.string().optional().nullable(), 
   businessImpact: z.string().optional().nullable(), 
   githubUrl: z.string()
     .refine(val => val === "" || z.string().url().safeParse(val).success, "Invalid GitHub URL"),

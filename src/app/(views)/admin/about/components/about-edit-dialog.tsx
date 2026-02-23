@@ -14,18 +14,17 @@ import { Label } from "@/components/ui/label";
 import { About, AboutFormValues, aboutSchema } from "@/schema/about-schema";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Save, SquarePen, Upload, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useForm } from "@tanstack/react-form";
 import ReactSelect from "react-select";
-import toast from "react-hot-toast";
 import NextImage from "next/image";
 import { extractUsernameFromUrl } from "@/lib/utils";
 import { getSkills } from "@/services/skill";
 import { getSosmed } from "@/services/sosmed";
 import { getProjects } from "@/services/projects";
-// Tambahkan import ini (sesuaikan path jika berbeda)
 import { getWorkExperiences } from "@/services/work-experience";
 import { z } from "zod";
+import { useAboutStore } from "@/store/admin/about-store"; // Import Store
 
 interface EditAboutDialogProps {
   about: About;
@@ -41,7 +40,6 @@ interface EditAboutDialogProps {
   isUpdating?: boolean;
 }
 
-// Helper function untuk convert Zod schema ke TanStack Form validator
 const createZodValidator = (schema: z.ZodType<any>) => {
   return ({ value }: { value: any }) => {
     const result = schema.safeParse(value);
@@ -57,43 +55,51 @@ export function EditAboutDialog({
   onUpdate,
   isUpdating = false,
 }: EditAboutDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const {
+    isDialogOpen,
+    openDialog,
+    closeDialog,
+    profileFile,
+    profilePreview,
+    profileDeleted,
+    isUploadingProfile,
+    handleProfileChange,
+    removeProfile,
+    removeExistingProfile,
+    restoreExistingProfile,
+    resetProfileState,
+    setIsUploadingProfile,
+  } = useAboutStore();
 
-  // TanStack Query untuk fetch data
+  // Queries untuk dropdown (tidak berubah)
   const { data: skills = [], isLoading: isLoadingSkills } = useQuery({
     queryKey: ["getSkills"],
     queryFn: getSkills,
-    enabled: isOpen,
+    enabled: isDialogOpen,
   });
 
   const { data: sosmed = [], isLoading: isLoadingSosmed } = useQuery({
     queryKey: ["getSosmed"],
     queryFn: getSosmed,
-    enabled: isOpen,
+    enabled: isDialogOpen,
   });
 
   const { data: project = [], isLoading: isLoadingProjects } = useQuery({
     queryKey: ["getProjects"],
     queryFn: getProjects,
-    enabled: isOpen,
+    enabled: isDialogOpen,
   });
 
-  // TAMBAHKAN: Query untuk Work Experiences
   const { data: workExperiences = [], isLoading: isLoadingWorkExperiences } =
     useQuery({
       queryKey: ["getWorkExperiences"],
       queryFn: getWorkExperiences,
-      enabled: isOpen,
+      enabled: isDialogOpen,
     });
-
-  const [profileFile, setProfileFile] = useState<File | null>(null);
-  const [profileDeleted, setProfileDeleted] = useState<boolean>(false);
-  const [profilePreview, setProfilePreview] = useState<string>("");
-  const [isUploadingProfile, setIsUploadingProfile] = useState(false);
 
   const profileInputRef = useRef<HTMLInputElement>(null);
 
-  // TanStack Form
+  // Form Logic
   const form = useForm({
     defaultValues: {
       name: about.name,
@@ -106,71 +112,39 @@ export function EditAboutDialog({
       projects: about.projects?.map((project) => project.id) || [],
     } as AboutFormValues,
     onSubmit: async ({ value }) => {
-      handleUpdate(value);
+      setIsUploadingProfile(true);
+      try {
+        await onUpdate(about.id, {
+          data: value,
+          profileFile,
+          profileDeleted,
+          oldProfile: about.profilePicture || "",
+        });
+        // Reset state sudah dihandle di onSuccess mutation hook
+      } catch (error) {
+        console.error("Error in handleUpdate:", error);
+        setIsUploadingProfile(false);
+      }
     },
   });
 
   const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
+    if (open) openDialog();
+    else {
+      closeDialog();
       form.reset();
-      setProfileFile(null);
-      setProfileDeleted(false);
-      setProfilePreview("");
-      setIsUploadingProfile(false);
+      resetProfileState();
     }
   };
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handler input file
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setProfileFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setProfilePreview(previewUrl);
-      setProfileDeleted(false);
-    }
-  };
-
-  const removeProfile = () => {
-    if (profilePreview) {
-      URL.revokeObjectURL(profilePreview);
-    }
-    setProfileFile(null);
-    setProfilePreview("");
-    if (profileInputRef.current) {
-      profileInputRef.current.value = "";
-    }
-  };
-
-  const removeExistingProfile = () => {
-    setProfileDeleted(true);
-  };
-
-  const restoreExistingProfile = () => {
-    setProfileDeleted(false);
-  };
-
-  const handleUpdate = async (data: AboutFormValues) => {
-    try {
-      setIsUploadingProfile(true);
-      await onUpdate(about.id, {
-        data,
-        profileFile,
-        profileDeleted,
-        oldProfile: about.profilePicture || "",
-      });
-
-      setIsOpen(false);
-      setIsUploadingProfile(false);
-    } catch (error) {
-      console.error("Error in handleUpdate:", error);
-      setIsUploadingProfile(false);
-      toast.error("Gagal update data");
-    }
+    if (file) handleProfileChange(file);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="h-10 w-full justify-between px-4">
           <span className="flex items-center">
@@ -283,7 +257,7 @@ export function EditAboutDialog({
                       ref={profileInputRef}
                       type="file"
                       accept="image/*"
-                      onChange={handleProfileChange}
+                      onChange={onFileChange}
                       className="hidden"
                       disabled={isUpdating}
                     />
@@ -652,7 +626,7 @@ export function EditAboutDialog({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => handleOpenChange(false)}
                   className="flex-1"
                   disabled={isUpdating}
                 >

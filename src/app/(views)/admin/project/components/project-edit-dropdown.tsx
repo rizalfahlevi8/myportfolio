@@ -326,7 +326,7 @@ export function ProjectEditDropdown({
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="lg:max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Edit className="h-5 w-5" />
@@ -346,7 +346,7 @@ export function ProjectEditDropdown({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 
                 {/* Title & Slug */}
-                <div className="md:col-span-1">
+                <div className="md:col-span-2 lg:col-span-1">
                   <form.Field name="title" validators={{ onChange: createZodValidator(projectSchema.shape.title) }}>
                     {(field) => (
                       <div className="space-y-2">
@@ -357,7 +357,7 @@ export function ProjectEditDropdown({
                     )}
                   </form.Field>
                 </div>
-                <div className="md:col-span-1">
+                <div className="md:col-span-2 lg:col-span-1">
                   <form.Field name="slug" validators={{ onChange: createZodValidator(projectSchema.shape.slug) }}>
                     {(field) => (
                       <div className="space-y-2">
@@ -370,7 +370,7 @@ export function ProjectEditDropdown({
                 </div>
 
                 {/* Tagline & Category */}
-                <div className="md:col-span-1">
+                <div className="md:col-span-2 lg:col-span-1">
                   <form.Field name="tagline" validators={{ onChange: createZodValidator(projectSchema.shape.tagline) }}>
                     {(field) => (
                       <div className="space-y-2">
@@ -381,7 +381,7 @@ export function ProjectEditDropdown({
                     )}
                   </form.Field>
                 </div>
-                <div className="md:col-span-1">
+                <div className="md:col-span-2 lg:col-span-1">
                   <form.Field name="category" validators={{ onChange: createZodValidator(projectSchema.shape.category) }}>
                     {(field) => (
                       <div className="space-y-2">
@@ -398,8 +398,8 @@ export function ProjectEditDropdown({
                   <form.Field name="description" validators={{ onChange: createZodValidator(projectSchema.shape.description) }}>
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-xs font-bold text-gray-700">Description *</Label>
-                        <Textarea placeholder="Project description..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                        <Label className="uppercase text-xs font-bold text-gray-700">Description</Label>
+                        <Textarea placeholder="Project description..." value={field.state.value ?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
                         {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
                       </div>
                     )}
@@ -407,28 +407,32 @@ export function ProjectEditDropdown({
                 </div>
 
                 {/* Background, Solution, Challenge */}
-                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
                   <form.Field name="background" validators={{ onChange: createZodValidator(projectSchema.shape.background) }}>
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-xs font-bold text-gray-700">Background *</Label>
-                        <Textarea placeholder="Background..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                        <Label className="uppercase text-xs font-bold text-gray-700">Background </Label>
+                        <Textarea placeholder="Background..." value={field.state.value ?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
                       </div>
                     )}
                   </form.Field>
+                  </div>
+                  <div className="md:col-span-2">
                   <form.Field name="solution" validators={{ onChange: createZodValidator(projectSchema.shape.solution) }}>
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-xs font-bold text-gray-700">Solution *</Label>
-                        <Textarea placeholder="Solution..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                        <Label className="uppercase text-xs font-bold text-gray-700">Solution </Label>
+                        <Textarea placeholder="Solution..." value={field.state.value ?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
                       </div>
                     )}
                   </form.Field>
+                  </div>
+                  <div className="md:col-span-2">
                   <form.Field name="challenge" validators={{ onChange: createZodValidator(projectSchema.shape.challenge) }}>
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-xs font-bold text-gray-700">Challenge *</Label>
-                        <Textarea placeholder="Challenge..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                        <Label className="uppercase text-xs font-bold text-gray-700">Challenge </Label>
+                        <Textarea placeholder="Challenge..." value={field.state.value ?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
                       </div>
                     )}
                   </form.Field>
@@ -439,7 +443,7 @@ export function ProjectEditDropdown({
                   <form.Field name="businessImpact">
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-xs font-bold text-gray-700">Business Impact (Optional)</Label>
+                        <Label className="uppercase text-xs font-bold text-gray-700">Business Impact</Label>
                       <Textarea placeholder="Business impact..." value={field.state.value ?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
                       </div>
                     )}
@@ -717,7 +721,7 @@ export function ProjectEditDropdown({
                 </div>
 
                 {/* GitHub & Live URL */}
-                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2 lg:col-span-1">
                   <form.Field name="githubUrl">
                     {(field) => (
                       <div className="space-y-2">
@@ -726,6 +730,8 @@ export function ProjectEditDropdown({
                       </div>
                     )}
                   </form.Field>
+                  </div>
+                  <div className="md:col-span-2 lg:col-span-1">
                   <form.Field name="liveUrl">
                     {(field) => (
                       <div className="space-y-2">

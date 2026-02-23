@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,9 +10,6 @@ import {
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { extractUsernameFromUrl } from "@/lib/utils";
-import { getAbout, putAbout } from "@/services/about";
-import { AboutFormValues } from "@/schema/about-schema";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BriefcaseBusiness,
   Building,
@@ -27,65 +23,32 @@ import {
   UserPen,
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
-import toast from "react-hot-toast";
 import { EditAboutDialog } from "./components/about-edit-dialog";
+import { useAbout } from "@/hooks/admin/use-about"; // Import custom hook
+import { useAboutStore } from "@/store/admin/about-store"; // Import store untuk dialog
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export default function AboutPage() {
-  const queryClient = useQueryClient();
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  // Gunakan Custom Hook
+  const {
+    aboutData,
+    isLoading,
+    isError,
+    error,
+    handleUpdateAbout,
+    updateMutation,
+  } = useAbout();
 
-  // Fetch about data
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["getAbout"],
-    queryFn: getAbout,
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: ({
-      aboutId,
-      updateData,
-    }: {
-      aboutId: string;
-      updateData: {
-        data: AboutFormValues;
-        profileFile?: File | null;
-        profileDeleted?: boolean;
-        oldProfile?: string;
-      };
-    }) => putAbout({ aboutId, ...updateData }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["getAbout"] });
-      toast.success("Data diri berhasil diupdate!");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Gagal update data diri");
-    },
-  });
-
-  const handleUpdateAbout = async (
-    aboutId: string,
-    updateData: {
-      data: AboutFormValues;
-      profileFile?: File | null;
-      profileDeleted?: boolean;
-      oldProfile?: string;
-    },
-  ) => {
-    setUpdatingId(aboutId);
-    try {
-      await updateMutation.mutateAsync({ aboutId, updateData });
-    } finally {
-      setUpdatingId(null);
-    }
-  };
+  // Akses state dari store
+  const { updatingId } = useAboutStore();
 
   function formatDate(date: Date | null) {
     if (!date) return "Sekarang";
     return date.toLocaleDateString("id-ID", { year: "numeric", month: "long" });
   }
-  const user = data;
+
+  const user = aboutData;
 
   return (
     <div className="flex-1 space-y-8 p-8">
@@ -233,9 +196,16 @@ export default function AboutPage() {
                     className="shadow-sm hover:shadow-md transition-shadow"
                   >
                     <CardHeader className="pb-4">
-                      <CardTitle className="text-lg">{project.title}</CardTitle>
+                      <div className="flex items-center gap-2 mb-1">
+                        <CardTitle className="text-lg">
+                          {project.title}
+                        </CardTitle>
+                        <Badge variant="outline" className="text-xs">
+                                {project.category}
+                              </Badge>
+                      </div>
                       <CardDescription className="text-sm leading-relaxed">
-                        {project.description}
+                        {project.tagline}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">

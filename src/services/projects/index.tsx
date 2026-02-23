@@ -26,14 +26,14 @@ export const postProject = async ({
 
   // --- Basic Fields ---
   formData.append("title", data.title);
-  formData.append("slug", data.slug); // Ditambahkan
-  formData.append("tagline", data.tagline); // Ditambahkan
-  formData.append("description", data.description);
-  formData.append("category", data.category); // Ditambahkan
-  formData.append("background", data.background); // Ditambahkan
-  formData.append("solution", data.solution); // Ditambahkan
-  formData.append("challenge", data.challenge); // Ditambahkan
-  formData.append("businessImpact", data.businessImpact ?? ""); // Ditambahkan
+  formData.append("slug", data.slug); 
+  formData.append("tagline", data.tagline); 
+  formData.append("description", data.description ?? ""); 
+  formData.append("category", data.category); 
+  formData.append("background", data.background ?? ""); 
+  formData.append("solution", data.solution ?? ""); 
+  formData.append("challenge", data.challenge ?? ""); 
+  formData.append("businessImpact", data.businessImpact ?? ""); 
 
   // --- Array Fields ---
   formData.append("features", JSON.stringify(data.features)); // Diubah: feature -> features
@@ -71,9 +71,9 @@ type PutProjectPayload = {
   updateData: {
     data: ProjectFormValues;
     thumbnailFile?: File | null;
-    galleryFiles?: File[];       // Diubah: photoFiles -> galleryFiles
-    existingGallery?: string[];  // Diubah: existingPhotos -> existingGallery
-    deletedGallery?: string[];   // Diubah: deletedPhotos -> deletedGallery
+    galleryFiles?: File[];       
+    existingGallery?: string[];  
+    deletedGallery?: string[];  
     thumbnailDeleted?: boolean;
     oldThumbnail?: string;
   };
@@ -97,14 +97,14 @@ export const putProject = async ({
 
   // --- Basic Fields ---
   formData.append("title", data.title);
-  formData.append("slug", data.slug); // Ditambahkan
-  formData.append("tagline", data.tagline); // Ditambahkan
-  formData.append("description", data.description);
-  formData.append("category", data.category); // Ditambahkan
-  formData.append("background", data.background); // Ditambahkan
-  formData.append("solution", data.solution); // Ditambahkan
-  formData.append("challenge", data.challenge); // Ditambahkan
-  formData.append("businessImpact", data.businessImpact ?? ""); // Ditambahkan
+  formData.append("slug", data.slug); 
+  formData.append("tagline", data.tagline); 
+  formData.append("description", data.description ?? ""); 
+  formData.append("category", data.category); 
+  formData.append("background", data.background ?? ""); 
+  formData.append("solution", data.solution ?? ""); 
+  formData.append("challenge", data.challenge ?? ""); 
+  formData.append("businessImpact", data.businessImpact ?? ""); 
 
   // --- Array Fields ---
   // Menyertakan logika filter

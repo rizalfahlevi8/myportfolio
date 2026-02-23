@@ -178,7 +178,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
           <span />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="lg:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Save className="h-5 w-5" />
@@ -197,7 +197,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               
               {/* Title Field */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 lg:col-span-1">
                 <form.Field
                   name="title"
                   validators={{ onChange: createZodValidator(projectSchema.shape.title) }}
@@ -222,7 +222,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
               </div>
 
               {/* Slug Field - Full Width */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 lg:col-span-1">
                 <form.Field
                   name="slug"
                   validators={{ onChange: createZodValidator(projectSchema.shape.slug) }}
@@ -247,7 +247,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
               </div>
 
               {/* Tagline Field - Full Width */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 lg:col-span-1">
                 <form.Field
                   name="tagline"
                   validators={{ onChange: createZodValidator(projectSchema.shape.tagline) }}
@@ -272,7 +272,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
               </div>
 
               {/* Category Field - Full Width */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 lg:col-span-1">
                 <form.Field
                   name="category"
                   validators={{ onChange: createZodValidator(projectSchema.shape.category) }}
@@ -307,7 +307,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                       <Label className="uppercase text-xs font-bold text-gray-700">Description *</Label>
                       <Textarea
                         placeholder="Ex: This project aims to create..."
-                        value={field.state.value}
+                        value={field.state.value?? ""}
                         onChange={(e) => field.handleChange(e.target.value)}
                         onBlur={field.handleBlur}
                         disabled={isAdding}
@@ -326,7 +326,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                   {(field) => (
                     <div className="space-y-2">
                       <Label className="uppercase text-xs font-bold text-gray-700">Background *</Label>
-                      <Textarea placeholder="Project background..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
+                      <Textarea placeholder="Project background..." value={field.state.value?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
                       {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
                     </div>
                   )}
@@ -335,7 +335,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                   {(field) => (
                     <div className="space-y-2">
                       <Label className="uppercase text-xs font-bold text-gray-700">Solution *</Label>
-                      <Textarea placeholder="Project solution..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
+                      <Textarea placeholder="Project solution..." value={field.state.value?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
                       {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
                     </div>
                   )}
@@ -344,7 +344,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                   {(field) => (
                     <div className="space-y-2">
                       <Label className="uppercase text-xs font-bold text-gray-700">Challenge *</Label>
-                      <Textarea placeholder="Project challenge..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
+                      <Textarea placeholder="Project challenge..." value={field.state.value?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
                       {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
                     </div>
                   )}
@@ -468,7 +468,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
               </div>
 
               {/* Thumbnail Upload */}
-              <div className="md:col-span-1">
+              <div className="md:col-span-2 lg:col-span-1">
                 <Label className="uppercase text-xs font-bold text-gray-700">Thumbnail *</Label>
                 <div className="mt-2">
                   <div className="flex items-center gap-4">
@@ -522,7 +522,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
               </div>
 
               {/* Gallery Upload */}
-              <div className="md:col-span-1">
+              <div className="md:col-span-2 lg:col-span-1">
                 <Label className="uppercase text-xs font-bold text-gray-700">Gallery *</Label>
                 <div className="mt-2">
                   <div className="flex items-center gap-4">
@@ -616,7 +616,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
               </div>
 
               {/* Github & Live URL */}
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2 lg:col-span-1">
                  <form.Field name="githubUrl">
                   {(field) => (
                     <div className="space-y-2">
@@ -631,6 +631,8 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                     </div>
                   )}
                 </form.Field>
+                </div>
+                <div className="md:col-span-2 lg:col-span-1">
                 <form.Field name="liveUrl">
                   {(field) => (
                     <div className="space-y-2">

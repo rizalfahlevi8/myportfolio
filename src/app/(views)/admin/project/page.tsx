@@ -177,11 +177,10 @@ export default function ProjectPage() {
             const isTemp = isTemporaryProject(projectItem.id);
             const thumbnailUrl = projectItem.thumbnail || null;
 
-            // Cek konten kolom kiri
             const hasFeatures =
-              projectItem.features && projectItem.features.length > 0; // Diubah: feature -> features
+              projectItem.features && projectItem.features.length > 0;
             const hasLibraries =
-              projectItem.libraries && projectItem.libraries.length > 0; // Diubah: technology -> libraries
+              projectItem.libraries && projectItem.libraries.length > 0;
             const showLeftColumn = hasFeatures || hasLibraries;
 
             return (
@@ -232,13 +231,12 @@ export default function ProjectPage() {
                             <h3 className="text-xl font-bold leading-tight truncate">
                               {projectItem.title}
                             </h3>
-                            {projectItem.category && ( // Ditambahkan: Tampil Category
+                            {projectItem.category && ( 
                               <Badge variant="outline" className="text-xs">
                                 {projectItem.category}
                               </Badge>
                             )}
                           </div>
-                          {/* Ditambahkan: Tampil Tagline jika ada */}
                           {projectItem.tagline && (
                              <p className="text-sm text-muted-foreground italic mb-1 truncate">
                                {projectItem.tagline}

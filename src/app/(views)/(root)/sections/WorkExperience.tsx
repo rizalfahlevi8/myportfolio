@@ -76,7 +76,6 @@ export const WorkExperienceSection = ({ home }: WorkExperienceSectionProps) => {
                 />
 
                 <div className="relative mt-10 md:mt-20 lg:mx-72">
-                    {/* Animated Timeline line */}
                     <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-linear-to-b from-primary/20 via-primary/50 to-primary/20 hidden lg:block">
                         <div className="absolute inset-0 bg-linear-to-b from-transparent via-primary to-transparent opacity-50 animate-pulse" />
                     </div>

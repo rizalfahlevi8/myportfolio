@@ -15,8 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { SkillFormValues, skillSchema } from "@/schema/skill-schema";
 import { useForm } from "@tanstack/react-form";
 import { Code, ExternalLink, Loader2, Plus } from "lucide-react";
-import { useState } from "react";
 import { z } from "zod";
+import { useSkillStore } from "@/store/admin/skill-store";
 
 interface AddSkillDialogProps {
   onAdd: (data: SkillFormValues) => Promise<void>;
@@ -35,7 +35,7 @@ const createZodValidator = (schema: z.ZodType<any>) => {
 };
 
 export function AddSkillDialog({ onAdd, isAdding = false }: AddSkillDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isAddDialogOpen, openAddDialog, closeAddDialog } = useSkillStore();
 
   // TanStack Form
   const form = useForm({
@@ -49,9 +49,9 @@ export function AddSkillDialog({ onAdd, isAdding = false }: AddSkillDialogProps)
   });
 
   const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      // Reset form when closing
+    if (open) openAddDialog();
+    else {
+      closeAddDialog();
       form.reset();
     }
   };
@@ -59,7 +59,6 @@ export function AddSkillDialog({ onAdd, isAdding = false }: AddSkillDialogProps)
   const handleAdd = async (data: SkillFormValues) => {
     try {
       await onAdd(data);
-      setIsOpen(false);
       form.reset();
     } catch (error) {
       console.error("Error in handleAdd:", error);
@@ -67,7 +66,7 @@ export function AddSkillDialog({ onAdd, isAdding = false }: AddSkillDialogProps)
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isAddDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="h-10">
           <Plus className="h-4 w-4 mr-2" />
@@ -293,7 +292,7 @@ export function AddSkillDialog({ onAdd, isAdding = false }: AddSkillDialogProps)
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsOpen(false)}
+                onClick={closeAddDialog}
                 className="flex-1"
                 disabled={isAdding}
               >

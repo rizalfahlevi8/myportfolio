@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,91 +10,26 @@ import {
 } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { SkillFormValues } from "@/schema/skill-schema";
-import { deleteSkill, getSkills, postSkill, putSkill } from "@/services/skill";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Code, Loader2 } from "lucide-react";
-import { useState } from "react";
-import toast from "react-hot-toast";
 import { SkillEditDropdown } from "./components/skill-edit-dropdown";
 import { AddSkillDialog } from "./components/add-skill-dialog";
+import { useSkills } from "@/hooks/admin/use-skills"; // Import custom hook
 
 const SkillPage = () => {
-  const queryClient = useQueryClient();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const {
+    skills,
+    isLoading,
+    isError,
+    error,
+    addMutation,
+    updateMutation,
+    deleteMutation,
+    handleAddSkill,
+    handleUpdateSkill,
+    handleDeleteSkill,
+  } = useSkills();
 
-  // Fetch skills data
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["getSkills"],
-    queryFn: getSkills,
-  });
-
-  // Add mutation
-  const addMutation = useMutation({
-    mutationFn: (newSkill: SkillFormValues) => postSkill(newSkill),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["getSkills"] });
-      toast.success("Skill berhasil ditambahkan!");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Gagal menambahkan skill");
-    },
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: ({
-      skillId,
-      data,
-    }: {
-      skillId: string;
-      data: SkillFormValues;
-    }) => putSkill(skillId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["getSkills"] });
-      toast.success("Skill berhasil diupdate!");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Gagal update skill");
-    },
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: (skillId: string) => deleteSkill(skillId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["getSkills"] });
-      toast.success("Skill berhasil dihapus!");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Gagal menghapus skill");
-    },
-  });
-
-  const handleAddSkill = async (data: SkillFormValues) => {
-    await addMutation.mutateAsync(data);
-  };
-
-  const handleUpdateSkill = async (skillId: string, data: SkillFormValues) => {
-    setUpdatingId(skillId);
-    try {
-      await updateMutation.mutateAsync({ skillId, data });
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const handleDeleteSkill = async (skillId: string) => {
-    setDeletingId(skillId);
-    try {
-      await deleteMutation.mutateAsync(skillId);
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const validSkills = data?.filter((skill: any) => skill && skill.id) || [];
+  const validSkills = skills?.filter((skill: any) => skill && skill.id) || [];
 
   // Group skills into rows of 3
   const groupedSkills = [];
@@ -105,7 +39,6 @@ const SkillPage = () => {
 
   return (
     <div className="flex-1 space-y-8 p-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <Heading
           title="Skills Management"
@@ -121,7 +54,6 @@ const SkillPage = () => {
 
       <Separator />
 
-      {/* Skills List Card */}
       <Card className="w-full">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -180,10 +112,10 @@ const SkillPage = () => {
                             skill={skill}
                             onUpdate={handleUpdateSkill}
                             onDelete={handleDeleteSkill}
-                            isUpdating={updatingId === skill.id}
-                            isDeleting={deletingId === skill.id}
+                            isUpdating={updateMutation.isPending}
+                            isDeleting={deleteMutation.isPending}
                             disabled={
-                              updatingId !== null || deletingId !== null
+                              updateMutation.isPending || deleteMutation.isPending
                             }
                           />
                         </div>

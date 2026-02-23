@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { Skill, SkillFormValues, skillSchema } from "@/schema/skill-schema";
 import {
@@ -31,6 +30,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { useSkillStore } from "@/store/admin/skill-store";
 
 interface SkillEditDropdownProps {
   skill: Skill;
@@ -41,7 +41,6 @@ interface SkillEditDropdownProps {
   disabled?: boolean;
 }
 
-// Helper function untuk convert Zod schema ke TanStack Form validator
 const createZodValidator = (schema: z.ZodType<any>) => {
   return ({ value }: { value: any }) => {
     const result = schema.safeParse(value);
@@ -60,11 +59,19 @@ export function SkillEditDropdown({
   isDeleting = false,
   disabled = false,
 }: SkillEditDropdownProps) {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const {
+    editingSkill,
+    setEditingSkill,
+    deletingSkill,
+    setDeletingSkill,
+    viewingSkill,
+    setViewingSkill,
+  } = useSkillStore();
 
-  // TanStack Form
+  const isEditOpen = editingSkill?.id === skill.id;
+  const isDeleteOpen = deletingSkill?.id === skill.id;
+  const isViewOpen = viewingSkill?.id === skill.id;
+
   const editForm = useForm({
     defaultValues: {
       name: skill.name,
@@ -75,32 +82,25 @@ export function SkillEditDropdown({
     },
   });
 
-  const handleEdit = () => {
+  const handleOpenEdit = () => {
     editForm.setFieldValue("name", skill.name);
     editForm.setFieldValue("icon", skill.icon);
-    setIsEditDialogOpen(true);
+    setEditingSkill(skill);
   };
 
   const handleUpdate = async (data: SkillFormValues) => {
     try {
       await onUpdate(skill.id, data);
-      setIsEditDialogOpen(false);
-      editForm.reset();
-      toast.success("Skill berhasil diupdate!");
     } catch (error) {
       console.error("Error updating skill:", error);
-      toast.error("Gagal mengupdate skill. Silakan coba lagi.");
     }
   };
 
   const handleDelete = async () => {
     try {
       await onDelete(skill.id);
-      setIsDeleteDialogOpen(false);
-      toast.success(`Skill "${skill.name}" berhasil dihapus!`);
     } catch (error) {
       console.error("Error deleting skill:", error);
-      toast.error("Gagal menghapus skill. Silakan coba lagi.");
     }
   };
 
@@ -119,17 +119,17 @@ export function SkillEditDropdown({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-48" align="end">
-          <DropdownMenuItem onClick={() => setIsViewDialogOpen(true)}>
+          <DropdownMenuItem onClick={() => setViewingSkill(skill)}>
             <Eye className="h-4 w-4 text-muted-foreground" />
             <span>View Details</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleEdit}>
+          <DropdownMenuItem onClick={handleOpenEdit}>
             <Edit className="h-4 w-4 text-muted-foreground" />
             <span>Edit Skill</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => setIsDeleteDialogOpen(true)}
+            onClick={() => setDeletingSkill(skill)}
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
@@ -139,7 +139,10 @@ export function SkillEditDropdown({
       </DropdownMenu>
 
       {/* View Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+      <Dialog
+        open={isViewOpen}
+        onOpenChange={(open) => !open && setViewingSkill(null)}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Skill Details</DialogTitle>
@@ -169,10 +172,7 @@ export function SkillEditDropdown({
               </div>
             </div>
             <div className="flex justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setIsViewDialogOpen(false)}
-              >
+              <Button variant="outline" onClick={() => setViewingSkill(null)}>
                 Close
               </Button>
             </div>
@@ -181,7 +181,10 @@ export function SkillEditDropdown({
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => !open && setEditingSkill(null)}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Skill</DialogTitle>
@@ -284,7 +287,7 @@ export function SkillEditDropdown({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsEditDialogOpen(false)}
+                onClick={() => setEditingSkill(null)}
                 disabled={isUpdating}
                 className="flex-1"
               >
@@ -319,7 +322,10 @@ export function SkillEditDropdown({
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <Dialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => !open && setDeletingSkill(null)}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Delete Skill</DialogTitle>
@@ -342,7 +348,7 @@ export function SkillEditDropdown({
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
+                onClick={() => setDeletingSkill(null)}
                 disabled={isDeleting}
                 className="flex-1"
               >
