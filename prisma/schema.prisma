@@ -24,20 +24,27 @@ model Sosmed {
 }
 
 model Project {
-  id          String    @id @default(cuid())
-  title       String
-  description String
-  feature     String[]
-  technology  String[]
-  githubUrl   String
-  liveUrl     String
-  thumbnail   String
-  photo       String[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime? @updatedAt
-  Skills      Skill[]   @relation("SkillOnProject")
-  About       About?    @relation(fields: [aboutId], references: [id])
-  aboutId     String?
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  tagline         String
+  description     String   @db.Text
+  category        String
+  features        String[]
+  libraries       String[]
+  background      String
+  solution        String
+  challenge       String
+  businessImpact  String?   @db.Text
+  githubUrl       String
+  liveUrl         String
+  thumbnail       String
+  gallery         String[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime? @updatedAt
+  Skills          Skill[]   @relation("SkillOnProject")
+  About           About?    @relation(fields: [aboutId], references: [id])
+  aboutId         String?
 }
 
 model Skill {

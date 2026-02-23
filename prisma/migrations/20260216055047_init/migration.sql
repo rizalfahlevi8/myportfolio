@@ -14,13 +14,20 @@ CREATE TABLE "Sosmed" (
 CREATE TABLE "Project" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "tagline" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "feature" TEXT[],
-    "technology" TEXT[],
+    "category" TEXT NOT NULL,
+    "features" TEXT[],
+    "libraries" TEXT[],
+    "background" TEXT NOT NULL,
+    "solution" TEXT NOT NULL,
+    "challenge" TEXT NOT NULL,
+    "businessImpact" TEXT,
     "githubUrl" TEXT NOT NULL,
     "liveUrl" TEXT NOT NULL,
     "thumbnail" TEXT NOT NULL,
-    "photo" TEXT[],
+    "gallery" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3),
     "aboutId" TEXT,
@@ -96,6 +103,9 @@ CREATE TABLE "_SkillOnAbout" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Sosmed_name_key" ON "Sosmed"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Project_slug_key" ON "Project"("slug");
 
 -- CreateIndex
 CREATE INDEX "_SkillOnProject_B_index" ON "_SkillOnProject"("B");

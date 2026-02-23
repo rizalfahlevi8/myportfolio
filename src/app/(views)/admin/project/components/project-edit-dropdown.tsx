@@ -56,9 +56,9 @@ interface ProjectEditDropdownProps {
   onUpdate: (projectId: string, updateData: {
     data: ProjectFormValues;
     thumbnailFile?: File | null;
-    photoFiles?: File[];
-    existingPhotos?: string[];
-    deletedPhotos?: string[];
+    galleryFiles?: File[];      
+    existingGallery?: string[]; 
+    deletedGallery?: string[];   
     thumbnailDeleted?: boolean;
     oldThumbnail?: string;
   }) => Promise<void>;
@@ -79,18 +79,17 @@ export function ProjectEditDropdown({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // --- File States (Managed separately from Form Values) ---
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]); 
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
-  const [photosPreviews, setPhotosPreviews] = useState<string[]>([]);
-  const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
-  const [deletedPhotos, setDeletedPhotos] = useState<string[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]); 
+  const [existingGallery, setExistingGallery] = useState<string[]>([]); 
+  const [deletedGallery, setDeletedGallery] = useState<string[]>([]); 
   const [thumbnailDeleted, setThumbnailDeleted] = useState<boolean>(false);
 
   // Refs for file inputs
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const photosInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null); // Diubah
 
   // --- Fetch Skills with TanStack Query ---
   const { data: skills = [], isLoading: isLoadingSkills } = useQuery({
@@ -102,97 +101,92 @@ export function ProjectEditDropdown({
     enabled: isEditDialogOpen, // Only fetch when dialog is open
   });
 
-  // --- Computed Value ---
-  const allPhotosDeleted = useMemo(() => {
-    const hasExistingPhotos = existingPhotos.length > 0;
-    const hasNewPhotos = photoFiles.length > 0;
-    return !hasExistingPhotos && !hasNewPhotos;
-  }, [existingPhotos, photoFiles]);
+  const allGalleryDeleted = useMemo(() => { // Diubah
+    const hasExistingGallery = existingGallery.length > 0;
+    const hasNewGallery = galleryFiles.length > 0;
+    return !hasExistingGallery && !hasNewGallery;
+  }, [existingGallery, galleryFiles]);
 
-  // --- TanStack Form Setup ---
   const form = useForm({
     defaultValues: {
       title: project.title,
+      slug: project.slug, 
+      tagline: project.tagline, 
       description: project.description,
-      feature: project.feature?.length ? project.feature : [""],
-      technology: project.technology?.length ? project.technology : [""],
+      category: project.category, 
+      features: project.features?.length ? project.features : [""], // Diubah
+      libraries: project.libraries?.length ? project.libraries : [""], // Diubah
+      background: project.background, 
+      solution: project.solution, 
+      challenge: project.challenge, 
+      businessImpact: project.businessImpact || "", 
       githubUrl: project.githubUrl || "",
       liveUrl: project.liveUrl || "",
       skillId: project.Skills?.map((s) => s.id) || [],
-    } as Omit<ProjectFormValues, 'thumbnail' | 'photo'> & { skillId: string[] },
+    } as Omit<ProjectFormValues, 'thumbnail' | 'gallery'> & { skillId: string[] },
     onSubmit: async ({ value }) => {
       await handleUpdate(value);
     },
   });
 
-  // --- Handlers ---
-  
-  const resetFileStates = () => {
-    setThumbnailFile(null);
-    setPhotoFiles([]);
-    setThumbnailPreview("");
-    setPhotosPreviews([]);
-    setExistingPhotos([]);
-    setDeletedPhotos([]);
-    setThumbnailDeleted(false);
-    if (thumbnailInputRef.current) thumbnailInputRef.current.value = "";
-    if (photosInputRef.current) photosInputRef.current.value = "";
-  };
-
   const handleEdit = () => {
-    // Reset form with project data
     form.reset({
       title: project.title,
+      slug: project.slug,
+      tagline: project.tagline,
       description: project.description,
+      category: project.category,
       githubUrl: project.githubUrl || "",
       liveUrl: project.liveUrl || "",
       skillId: project.Skills?.map((s) => s.id) || [],
-      feature: project.feature?.length ? project.feature : [""],
-      technology: project.technology?.length ? project.technology : [""],
+      features: project.features?.length ? project.features : [""],
+      libraries: project.libraries?.length ? project.libraries : [""],
+      background: project.background,
+      solution: project.solution,
+      challenge: project.challenge,
+      businessImpact: project.businessImpact || "",
     });
 
     // Reset file states
-    setExistingPhotos(project.photo || []);
-    setDeletedPhotos([]);
+    setExistingGallery(project.gallery || []); 
+    setDeletedGallery([]);
     setThumbnailFile(null);
-    setPhotoFiles([]);
+    setGalleryFiles([]);
     setThumbnailPreview("");
-    setPhotosPreviews([]);
+    setGalleryPreviews([]);
     setThumbnailDeleted(false);
 
     setIsEditDialogOpen(true);
   };
 
   const handleUpdate = async (formData: any) => {
-    // Validasi File Manual
     if (!project.thumbnail && !thumbnailFile) {
        toast.error("Thumbnail harus diupload!");
        return;
     }
-    if (allPhotosDeleted) {
+    if (allGalleryDeleted) {
        toast.error("Minimal satu foto diperlukan!");
        return;
     }
 
-    // Filter empty strings
-    const filteredFeatures = formData.feature.filter((f: string) => f.trim() !== "");
-    const filteredTechnologies = formData.technology.filter((t: string) => t.trim() !== "");
+    const filteredFeatures = formData.features.filter((f: string) => f.trim() !== "");
+    const filteredLibraries = formData.libraries.filter((l: string) => l.trim() !== "");
 
     if (filteredFeatures.length === 0) {
       toast.error("Minimal satu feature harus diisi!");
       return;
     }
-    if (filteredTechnologies.length === 0) {
-      toast.error("Minimal satu technology harus diisi!");
+    if (filteredLibraries.length === 0) {
+      toast.error("Minimal satu library harus diisi!");
       return;
     }
 
     const payload: ProjectFormValues = {
       ...formData,
-      feature: filteredFeatures,
-      technology: filteredTechnologies,
+      features: filteredFeatures,
+      libraries: filteredLibraries,
       thumbnail: "placeholder", // Placeholder for schema validation
-      photo: ["placeholder"],   // Placeholder for schema validation
+      gallery: ["placeholder"],   // Diubah: photo -> gallery
       skillId: formData.skillId ?? [],
     };
 
@@ -200,9 +194,9 @@ export function ProjectEditDropdown({
       await onUpdate(project.id, {
         data: payload,
         thumbnailFile,
-        photoFiles,
-        existingPhotos,
-        deletedPhotos,
+        galleryFiles,       // Diubah
+        existingGallery,    // Diubah
+        deletedGallery,     // Diubah
         thumbnailDeleted,
         oldThumbnail: project.thumbnail || "",
       });
@@ -231,11 +225,10 @@ export function ProjectEditDropdown({
     if (!open) {
       // Clean up object URLs
       if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
-      photosPreviews.forEach((url) => URL.revokeObjectURL(url));
+      galleryPreviews.forEach((url) => URL.revokeObjectURL(url));
     }
   };
 
-  // --- File Specific Handlers ---
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -247,27 +240,27 @@ export function ProjectEditDropdown({
     }
   };
 
-  const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => { // Diubah
     const files = e.target.files;
     if (files) {
       const fileArray = Array.from(files);
-      setPhotoFiles((prev) => [...prev, ...fileArray]);
+      setGalleryFiles((prev) => [...prev, ...fileArray]);
       fileArray.forEach((file) => {
-        setPhotosPreviews((prev) => [...prev, URL.createObjectURL(file)]);
+        setGalleryPreviews((prev) => [...prev, URL.createObjectURL(file)]);
       });
     }
   };
 
-  const removeExistingPhoto = (index: number) => {
-    const photoToDelete = existingPhotos[index];
-    setDeletedPhotos((prev) => [...prev, photoToDelete]);
-    setExistingPhotos((prev) => prev.filter((_, i) => i !== index));
+  const removeExistingGalleryItem = (index: number) => { // Diubah
+    const itemToDelete = existingGallery[index];
+    setDeletedGallery((prev) => [...prev, itemToDelete]);
+    setExistingGallery((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const removeNewPhoto = (index: number) => {
-    URL.revokeObjectURL(photosPreviews[index]);
-    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
-    setPhotosPreviews((prev) => prev.filter((_, i) => i !== index));
+  const removeNewGalleryItem = (index: number) => { // Diubah
+    URL.revokeObjectURL(galleryPreviews[index]);
+    setGalleryFiles((prev) => prev.filter((_, i) => i !== index));
+    setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const removeThumbnail = () => {
@@ -280,18 +273,18 @@ export function ProjectEditDropdown({
   const removeExistingThumbnail = () => setThumbnailDeleted(true);
   const restoreExistingThumbnail = () => setThumbnailDeleted(false);
 
-  const restoreAllPhotos = () => {
-    setExistingPhotos((prev) => [...prev, ...deletedPhotos]);
-    setDeletedPhotos([]);
+  const restoreAllGallery = () => { // Diubah
+    setExistingGallery((prev) => [...prev, ...deletedGallery]);
+    setDeletedGallery([]);
   };
 
-  const removeAllPhotos = () => {
-    setDeletedPhotos((prev) => [...prev, ...existingPhotos]);
-    setExistingPhotos([]);
-    photosPreviews.forEach((url) => URL.revokeObjectURL(url));
-    setPhotoFiles([]);
-    setPhotosPreviews([]);
-    if (photosInputRef.current) photosInputRef.current.value = "";
+  const removeAllGallery = () => { // Diubah
+    setDeletedGallery((prev) => [...prev, ...existingGallery]);
+    setExistingGallery([]);
+    galleryPreviews.forEach((url) => URL.revokeObjectURL(url));
+    setGalleryFiles([]);
+    setGalleryPreviews([]);
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
   return (
@@ -350,60 +343,113 @@ export function ProjectEditDropdown({
               }}
               className="space-y-6"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-end">
-                {/* Title */}
-                <div className="lg:col-span-full">
-                  <form.Field
-                    name="title"
-                    validators={{ onChange: createZodValidator(projectSchema.shape.title) }}
-                  >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                
+                {/* Title & Slug */}
+                <div className="md:col-span-1">
+                  <form.Field name="title" validators={{ onChange: createZodValidator(projectSchema.shape.title) }}>
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-sm font-semibold text-gray-700">Title *</Label>
-                        <Input
-                          type="text"
-                          placeholder="Ex: System Monitoring Dashboard"
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          disabled={isUpdating}
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>
-                        )}
+                        <Label className="uppercase text-xs font-bold text-gray-700">Title *</Label>
+                        <Input placeholder="Ex: E-Commerce App" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                        {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
+                      </div>
+                    )}
+                  </form.Field>
+                </div>
+                <div className="md:col-span-1">
+                  <form.Field name="slug" validators={{ onChange: createZodValidator(projectSchema.shape.slug) }}>
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label className="uppercase text-xs font-bold text-gray-700">Slug *</Label>
+                        <Input placeholder="Ex: e-commerce-app" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                        {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
+                      </div>
+                    )}
+                  </form.Field>
+                </div>
+
+                {/* Tagline & Category */}
+                <div className="md:col-span-1">
+                  <form.Field name="tagline" validators={{ onChange: createZodValidator(projectSchema.shape.tagline) }}>
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label className="uppercase text-xs font-bold text-gray-700">Tagline *</Label>
+                        <Input placeholder="Ex: Platform jual beli terpercaya" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                        {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
+                      </div>
+                    )}
+                  </form.Field>
+                </div>
+                <div className="md:col-span-1">
+                  <form.Field name="category" validators={{ onChange: createZodValidator(projectSchema.shape.category) }}>
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label className="uppercase text-xs font-bold text-gray-700">Category *</Label>
+                        <Input placeholder="Ex: Web App" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                        {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
                       </div>
                     )}
                   </form.Field>
                 </div>
 
                 {/* Description */}
-                <div className="lg:col-span-full">
-                  <form.Field
-                    name="description"
-                    validators={{ onChange: createZodValidator(projectSchema.shape.description) }}
-                  >
+                <div className="md:col-span-2">
+                  <form.Field name="description" validators={{ onChange: createZodValidator(projectSchema.shape.description) }}>
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-sm font-semibold text-gray-700">Description *</Label>
-                        <Textarea
-                          placeholder="Ex: This project aims to create a system monitoring dashboard..."
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          disabled={isUpdating}
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>
-                        )}
+                        <Label className="uppercase text-xs font-bold text-gray-700">Description *</Label>
+                        <Textarea placeholder="Project description..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                        {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
+                      </div>
+                    )}
+                  </form.Field>
+                </div>
+
+                {/* Background, Solution, Challenge */}
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <form.Field name="background" validators={{ onChange: createZodValidator(projectSchema.shape.background) }}>
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label className="uppercase text-xs font-bold text-gray-700">Background *</Label>
+                        <Textarea placeholder="Background..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                      </div>
+                    )}
+                  </form.Field>
+                  <form.Field name="solution" validators={{ onChange: createZodValidator(projectSchema.shape.solution) }}>
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label className="uppercase text-xs font-bold text-gray-700">Solution *</Label>
+                        <Textarea placeholder="Solution..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                      </div>
+                    )}
+                  </form.Field>
+                  <form.Field name="challenge" validators={{ onChange: createZodValidator(projectSchema.shape.challenge) }}>
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label className="uppercase text-xs font-bold text-gray-700">Challenge *</Label>
+                        <Textarea placeholder="Challenge..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
+                      </div>
+                    )}
+                  </form.Field>
+                </div>
+
+                 {/* Business Impact */}
+                 <div className="md:col-span-2">
+                  <form.Field name="businessImpact">
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label className="uppercase text-xs font-bold text-gray-700">Business Impact (Optional)</Label>
+                      <Textarea placeholder="Business impact..." value={field.state.value ?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
                       </div>
                     )}
                   </form.Field>
                 </div>
 
                 {/* Features (Dynamic Array) */}
-                <div className="lg:col-span-full">
-                  <Label className="uppercase text-sm font-semibold text-gray-700 mb-3 block">Feature *</Label>
-                  <form.Field name="feature">
+                <div className="md:col-span-2">
+                  <Label className="uppercase text-xs font-bold text-gray-700 mb-3 block">Features *</Label>
+                  <form.Field name="features">
                     {(field) => (
                       <div className="space-y-3">
                         {field.state.value.map((_, index) => (
@@ -441,7 +487,7 @@ export function ProjectEditDropdown({
                           type="button"
                           onClick={() => field.handleChange([...field.state.value, ""])}
                           variant="secondary"
-                          className="mt-2"
+                          size="sm"
                           disabled={isUpdating}
                         >
                           <Plus className="h-4 w-4 mr-2" />
@@ -452,17 +498,17 @@ export function ProjectEditDropdown({
                   </form.Field>
                 </div>
 
-                {/* Technologies (Dynamic Array) */}
-                <div className="lg:col-span-full">
-                  <Label className="uppercase text-sm font-semibold text-gray-700 mb-3 block">Technology *</Label>
-                  <form.Field name="technology">
+                {/* Libraries (Dynamic Array) */}
+                <div className="md:col-span-2">
+                  <Label className="uppercase text-xs font-bold text-gray-700 mb-3 block">Libraries *</Label>
+                  <form.Field name="libraries">
                     {(field) => (
                       <div className="space-y-3">
                         {field.state.value.map((_, index) => (
                           <div key={index} className="flex items-center gap-2">
                             <div className="flex-1">
                               <Input
-                                placeholder={`Technology ${index + 1}`}
+                                placeholder={`Library ${index + 1}`}
                                 value={field.state.value[index]}
                                 onChange={(e) => {
                                   const newVal = [...field.state.value];
@@ -493,11 +539,11 @@ export function ProjectEditDropdown({
                           type="button"
                           onClick={() => field.handleChange([...field.state.value, ""])}
                           variant="secondary"
-                          className="mt-2"
+                          size="sm"
                           disabled={isUpdating}
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Tambah Technology
+                          Tambah Library
                         </Button>
                       </div>
                     )}
@@ -505,8 +551,8 @@ export function ProjectEditDropdown({
                 </div>
 
                 {/* Thumbnail Section */}
-                <div className="lg:col-span-full">
-                  <Label className="uppercase text-sm font-semibold text-gray-700">Thumbnail *</Label>
+                <div className="md:col-span-2 lg:col-span-1">
+                  <Label className="uppercase text-xs font-bold text-gray-700">Thumbnail *</Label>
                   <div className="mt-2 space-y-4">
                     {project.thumbnail && !thumbnailFile && !thumbnailDeleted && (
                       <div>
@@ -558,25 +604,25 @@ export function ProjectEditDropdown({
 
                     <div className="flex items-center gap-4">
                       <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" disabled={isUpdating} />
-                      <Button type="button" variant="outline" onClick={() => thumbnailInputRef.current?.click()} disabled={isUpdating} className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => thumbnailInputRef.current?.click()} disabled={isUpdating} className="flex items-center gap-2">
                         <Upload className="h-4 w-4" />
-                        {project.thumbnail && !thumbnailDeleted ? "Change Thumbnail" : "Upload Thumbnail"}
+                        {project.thumbnail && !thumbnailDeleted ? "Change" : "Upload"}
                       </Button>
-                      {thumbnailFile && <span className="text-sm text-gray-600">{thumbnailFile.name}</span>}
+                      {thumbnailFile && <span className="text-xs text-gray-600">{thumbnailFile.name}</span>}
                     </div>
                   </div>
                 </div>
 
-                {/* Photos Section */}
-                <div className="lg:col-span-full">
-                  <Label className="uppercase text-sm font-semibold text-gray-700">Photos *</Label>
+                {/* Gallery Section */}
+                <div className="md:col-span-2 lg:col-span-1">
+                  <Label className="uppercase text-xs font-bold text-gray-700">Gallery *</Label>
                   <div className="mt-2 space-y-4">
-                    {allPhotosDeleted && (
+                    {allGalleryDeleted && (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-red-800">Semua foto akan dihapus. Minimal satu foto diperlukan!</span>
-                          {deletedPhotos.length > 0 && (
-                            <Button type="button" variant="outline" size="sm" onClick={restoreAllPhotos} disabled={isUpdating}>
+                          <span className="text-sm text-red-800">Semua foto akan dihapus!</span>
+                          {deletedGallery.length > 0 && (
+                            <Button type="button" variant="outline" size="sm" onClick={restoreAllGallery} disabled={isUpdating}>
                               Restore All
                             </Button>
                           )}
@@ -584,14 +630,14 @@ export function ProjectEditDropdown({
                       </div>
                     )}
 
-                    {existingPhotos.length > 0 && (
+                    {existingGallery.length > 0 && (
                       <div>
-                        <p className="text-sm text-gray-600 mb-2">Current photos:</p>
-                        <div className="grid grid-cols-3 gap-4">
-                          {existingPhotos.map((photo, index) => (
+                        <p className="text-sm text-gray-600 mb-2">Current gallery:</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {existingGallery.map((photo, index) => (
                             <div key={index} className="relative">
-                              <NextImage src={photo} alt={`Current photo ${index + 1}`} width={300} height={96} className="w-full h-24 object-cover rounded-lg border" />
-                              <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => removeExistingPhoto(index)} disabled={isUpdating}>
+                              <NextImage src={photo} alt={`Current photo ${index + 1}`} width={300} height={96} className="w-full h-20 object-cover rounded-lg border" />
+                              <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => removeExistingGalleryItem(index)} disabled={isUpdating}>
                                 <X className="h-3 w-3" />
                               </Button>
                             </div>
@@ -600,14 +646,14 @@ export function ProjectEditDropdown({
                       </div>
                     )}
 
-                    {photosPreviews.length > 0 && (
+                    {galleryPreviews.length > 0 && (
                       <div>
                         <p className="text-sm text-gray-600 mb-2">New photos:</p>
-                        <div className="grid grid-cols-3 gap-4">
-                          {photosPreviews.map((preview, index) => (
+                        <div className="grid grid-cols-3 gap-2">
+                          {galleryPreviews.map((preview, index) => (
                             <div key={index} className="relative">
-                              <NextImage src={preview} alt={`New photo preview ${index + 1}`} width={300} height={96} className="w-full h-24 object-cover rounded-lg border" />
-                              <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => removeNewPhoto(index)} disabled={isUpdating}>
+                              <NextImage src={preview} alt={`New photo preview ${index + 1}`} width={300} height={96} className="w-full h-20 object-cover rounded-lg border" />
+                              <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => removeNewGalleryItem(index)} disabled={isUpdating}>
                                 <X className="h-3 w-3" />
                               </Button>
                             </div>
@@ -616,32 +662,30 @@ export function ProjectEditDropdown({
                       </div>
                     )}
 
-                    {(existingPhotos.length > 0 || photoFiles.length > 0) && (
-                      <div className="flex justify-center">
-                        <Button type="button" variant="outline" onClick={removeAllPhotos} disabled={isUpdating} className="text-red-600 hover:text-red-700">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Remove All Photos
-                        </Button>
-                      </div>
+                    {(existingGallery.length > 0 || galleryFiles.length > 0) && (
+                       <Button type="button" variant="outline" size="sm" onClick={removeAllGallery} disabled={isUpdating} className="text-red-600 hover:text-red-700 w-full">
+                         <Trash2 className="h-4 w-4 mr-2" />
+                         Remove All
+                       </Button>
                     )}
 
                     <div className="flex items-center gap-4">
-                      <input ref={photosInputRef} type="file" accept="image/*" multiple onChange={handlePhotosChange} className="hidden" disabled={isUpdating} />
-                      <Button type="button" variant="outline" onClick={() => photosInputRef.current?.click()} disabled={isUpdating} className="flex items-center gap-2">
+                      <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleGalleryChange} className="hidden" disabled={isUpdating} />
+                      <Button type="button" variant="outline" size="sm" onClick={() => galleryInputRef.current?.click()} disabled={isUpdating} className="flex items-center gap-2">
                         <Image className="h-4 w-4" />
-                        Add More Photos
+                        Add Photos
                       </Button>
-                      {photoFiles.length > 0 && <span className="text-sm text-gray-600">{photoFiles.length} new file(s) selected</span>}
+                      {galleryFiles.length > 0 && <span className="text-xs text-gray-600">{galleryFiles.length} new file(s)</span>}
                     </div>
                   </div>
                 </div>
 
                 {/* Skills Selection */}
-                <div className="lg:col-span-full">
+                <div className="md:col-span-2">
                   <form.Field name="skillId">
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-sm font-semibold text-gray-700">Related Skills</Label>
+                        <Label className="uppercase text-xs font-bold text-gray-700">Related Skills</Label>
                         <ReactSelect<{ label: string; value: string; icon: string }, true>
                           isMulti
                           options={skills.map((skill) => ({
@@ -661,7 +705,7 @@ export function ProjectEditDropdown({
                           }}
                           formatOptionLabel={(option) => (
                             <span className="flex items-center gap-2">
-                              <i className={`${option.icon} text-2xl`} />
+                              <i className={`${option.icon} text-lg`} />
                               {option.label}
                             </span>
                           )}
@@ -673,42 +717,27 @@ export function ProjectEditDropdown({
                 </div>
 
                 {/* GitHub & Live URL */}
-                <div className="lg:col-span-full">
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <form.Field name="githubUrl">
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-sm font-semibold text-gray-700">GitHub URL</Label>
-                        <Input
-                          type="text"
-                          placeholder="Ex: https://github.com/your-repo (optional)"
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          disabled={isUpdating}
-                        />
+                        <Label className="uppercase text-xs font-bold text-gray-700">GitHub URL</Label>
+                        <Input placeholder="https://github.com/..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
                       </div>
                     )}
                   </form.Field>
-                </div>
-
-                <div className="lg:col-span-full">
                   <form.Field name="liveUrl">
                     {(field) => (
                       <div className="space-y-2">
-                        <Label className="uppercase text-sm font-semibold text-gray-700">Live URL</Label>
-                        <Input
-                          type="text"
-                          placeholder="Ex: https://your-live-url.com (optional)"
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          disabled={isUpdating}
-                        />
+                        <Label className="uppercase text-xs font-bold text-gray-700">Live URL</Label>
+                        <Input placeholder="https://live-url.com" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isUpdating} />
                       </div>
                     )}
                   </form.Field>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="lg:col-span-full flex gap-2 pt-4">
+                <div className="md:col-span-2 flex gap-2 pt-4 border-t">
                   <Button
                     type="button"
                     variant="outline"
@@ -723,7 +752,7 @@ export function ProjectEditDropdown({
                       <Button
                         type="submit"
                         className="flex-1"
-                        disabled={!canSubmit || isUpdating || thumbnailDeleted || allPhotosDeleted}
+                        disabled={!canSubmit || isUpdating || thumbnailDeleted || allGalleryDeleted}
                       >
                         {isUpdating ? (
                           <>

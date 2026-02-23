@@ -24,7 +24,7 @@ import {
   getProjects,
   postProject,
   putProject,
-} from "@/services/projects"; // Import service yang sudah dibuat
+} from "@/services/projects";
 import { ProjectFormValues } from "@/schema/project-schema";
 import AddProjectDialog from "./components/add-project-dialog";
 import { ProjectEditDropdown } from "./components/project-edit-dropdown";
@@ -41,16 +41,17 @@ export default function ProjectPage() {
   });
 
   // 2. Add Mutation
+  // Diubah: 'photos' menjadi 'galleryFiles' sesuai service API
   const addMutation = useMutation({
     mutationFn: ({
       data,
       thumbnail,
-      photos,
+      galleryFiles,
     }: {
       data: ProjectFormValues;
       thumbnail: File | null;
-      photos: File[];
-    }) => postProject({ data, thumbnail, photos }),
+      galleryFiles: File[];
+    }) => postProject({ data, thumbnail, galleryFiles }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["getProjects"] });
       toast.success("Project berhasil ditambahkan!");
@@ -61,6 +62,7 @@ export default function ProjectPage() {
   });
 
   // 3. Update Mutation
+  // Diubah: Struktur updateData disesuaikan dengan field baru (gallery)
   const updateMutation = useMutation({
     mutationFn: ({
       projectId,
@@ -70,9 +72,9 @@ export default function ProjectPage() {
       updateData: {
         data: ProjectFormValues;
         thumbnailFile?: File | null;
-        photoFiles?: File[];
-        existingPhotos?: string[];
-        deletedPhotos?: string[];
+        galleryFiles?: File[];       // Diubah
+        existingGallery?: string[];  // Diubah
+        deletedGallery?: string[];   // Diubah
         thumbnailDeleted?: boolean;
         oldThumbnail?: string;
       };
@@ -102,9 +104,9 @@ export default function ProjectPage() {
   const handleAddProject = async (
     data: ProjectFormValues,
     thumbnail: File | null,
-    photos: File[],
+    gallery: File[], // Diubah parameter dari 'photos'
   ) => {
-    await addMutation.mutateAsync({ data, thumbnail, photos });
+    await addMutation.mutateAsync({ data, thumbnail, galleryFiles: gallery });
   };
 
   const handleUpdateProject = async (
@@ -112,9 +114,9 @@ export default function ProjectPage() {
     updateData: {
       data: ProjectFormValues;
       thumbnailFile?: File | null;
-      photoFiles?: File[];
-      existingPhotos?: string[];
-      deletedPhotos?: string[];
+      galleryFiles?: File[];       // Diubah
+      existingGallery?: string[];  // Diubah
+      deletedGallery?: string[];   // Diubah
       thumbnailDeleted?: boolean;
       oldThumbnail?: string;
     },
@@ -175,12 +177,12 @@ export default function ProjectPage() {
             const isTemp = isTemporaryProject(projectItem.id);
             const thumbnailUrl = projectItem.thumbnail || null;
 
-            // Cek apakah kolom kiri (Feature & Tech) memiliki konten
+            // Cek konten kolom kiri
             const hasFeatures =
-              projectItem.feature && projectItem.feature.length > 0;
-            const hasTechnologies =
-              projectItem.technology && projectItem.technology.length > 0;
-            const showLeftColumn = hasFeatures || hasTechnologies;
+              projectItem.features && projectItem.features.length > 0; // Diubah: feature -> features
+            const hasLibraries =
+              projectItem.libraries && projectItem.libraries.length > 0; // Diubah: technology -> libraries
+            const showLeftColumn = hasFeatures || hasLibraries;
 
             return (
               <Card
@@ -226,9 +228,22 @@ export default function ProjectPage() {
                       {/* Header */}
                       <div className="flex items-start justify-between mb-3 gap-4">
                         <div className="flex-1 min-w-0 overflow-hidden">
-                          <h3 className="text-xl font-bold leading-tight mb-2 truncate">
-                            {projectItem.title}
-                          </h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-xl font-bold leading-tight truncate">
+                              {projectItem.title}
+                            </h3>
+                            {projectItem.category && ( // Ditambahkan: Tampil Category
+                              <Badge variant="outline" className="text-xs">
+                                {projectItem.category}
+                              </Badge>
+                            )}
+                          </div>
+                          {/* Ditambahkan: Tampil Tagline jika ada */}
+                          {projectItem.tagline && (
+                             <p className="text-sm text-muted-foreground italic mb-1 truncate">
+                               {projectItem.tagline}
+                             </p>
+                          )}
                           <div className="text-sm text-muted-foreground">
                             <p
                               className="leading-5 overflow-hidden"
@@ -265,7 +280,7 @@ export default function ProjectPage() {
                       <div
                         className={`grid gap-4 mb-4 ${showLeftColumn ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}
                       >
-                        {/* Kolom Kiri: Hanya render jika ada Feature/Tech */}
+                        {/* Kolom Kiri: Features & Libraries */}
                         {showLeftColumn && (
                           <div className="space-y-3 min-w-0">
                             {/* Features */}
@@ -278,7 +293,7 @@ export default function ProjectPage() {
                                   </span>
                                 </div>
                                 <div className="flex flex-wrap gap-1">
-                                  {projectItem.feature
+                                  {projectItem.features
                                     .slice(0, 2)
                                     .map((feature, index) => (
                                       <Badge
@@ -289,45 +304,45 @@ export default function ProjectPage() {
                                         {feature}
                                       </Badge>
                                     ))}
-                                  {projectItem.feature.length > 2 && (
+                                  {projectItem.features.length > 2 && (
                                     <Badge
                                       variant="outline"
                                       className="text-xs"
                                     >
-                                      +{projectItem.feature.length - 2} more
+                                      +{projectItem.features.length - 2} more
                                     </Badge>
                                   )}
                                 </div>
                               </div>
                             )}
 
-                            {/* Technologies */}
-                            {hasTechnologies && (
+                            {/* Libraries */}
+                            {hasLibraries && (
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                   <Wrench className="h-4 w-4 text-primary shrink-0" />
                                   <span className="text-sm font-medium">
-                                    Tech Stack
+                                    Libraries
                                   </span>
                                 </div>
                                 <div className="flex flex-wrap gap-1">
-                                  {projectItem.technology
+                                  {projectItem.libraries
                                     .slice(0, 2)
-                                    .map((tech, index) => (
+                                    .map((lib, index) => (
                                       <Badge
                                         key={index}
                                         variant="secondary"
                                         className="text-xs"
                                       >
-                                        {tech}
+                                        {lib}
                                       </Badge>
                                     ))}
-                                  {projectItem.technology.length > 2 && (
+                                  {projectItem.libraries.length > 2 && (
                                     <Badge
                                       variant="secondary"
                                       className="text-xs"
                                     >
-                                      +{projectItem.technology.length - 2} more
+                                      +{projectItem.libraries.length - 2} more
                                     </Badge>
                                   )}
                                 </div>
@@ -336,7 +351,7 @@ export default function ProjectPage() {
                           </div>
                         )}
 
-                        {/* Kolom Kanan (atau Kolom Utama jika kiri kosong): Skills & Photos */}
+                        {/* Kolom Kanan: Skills & Gallery */}
                         <div className="space-y-3 min-w-0">
                           {/* Skills */}
                           {projectItem.Skills &&
@@ -372,29 +387,28 @@ export default function ProjectPage() {
                               </div>
                             )}
 
-                          {/* Project Photos */}
-                          {projectItem.photo &&
-                            projectItem.photo.length > 0 && (
+                          {/* Project Gallery */}
+                          {projectItem.gallery &&
+                            projectItem.gallery.length > 0 && (
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                   <Monitor className="h-4 w-4 text-primary shrink-0" />
                                   <span className="text-sm font-medium">
                                     Tampilan Aplikasi (
-                                    {projectItem.photo.length})
+                                    {projectItem.gallery.length})
                                   </span>
                                 </div>
                                 <div className="flex gap-1">
-                                  {projectItem.photo
+                                  {projectItem.gallery
                                     .slice(0, 4)
                                     .map((photo, index) => {
-                                      const photoUrl = photo;
                                       return (
                                         <div
                                           key={index}
                                           className="relative w-12 h-8 rounded overflow-hidden border shrink-0"
                                         >
                                           <Image
-                                            src={photoUrl}
+                                            src={photo}
                                             alt={`${projectItem.title} tampilan aplikasi ${index + 1}`}
                                             fill
                                             className="object-cover hover:scale-110 transition-transform cursor-pointer"
@@ -402,10 +416,10 @@ export default function ProjectPage() {
                                         </div>
                                       );
                                     })}
-                                  {projectItem.photo.length > 4 && (
+                                  {projectItem.gallery.length > 4 && (
                                     <div className="w-12 h-8 rounded border bg-muted flex items-center justify-center shrink-0">
                                       <span className="text-[10px] font-medium text-muted-foreground">
-                                        +{projectItem.photo.length - 4}
+                                        +{projectItem.gallery.length - 4}
                                       </span>
                                     </div>
                                   )}

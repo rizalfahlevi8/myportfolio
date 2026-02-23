@@ -11,13 +11,20 @@ export async function GET() {
       select: {
         id: true,
         title: true,
+        slug: true,           
+        tagline: true,        
         description: true,
-        feature: true,
-        technology: true,
+        category: true,       
+        features: true,       
+        libraries: true,      
+        background: true,     
+        solution: true,       
+        challenge: true,      
+        businessImpact: true, 
         githubUrl: true,
         liveUrl: true,
         thumbnail: true,
-        photo: true,
+        gallery: true,        
         About: true,
         Skills: {
           select: {
@@ -41,48 +48,56 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    // Gunakan FormData, bukan JSON!
     const formData = await req.formData();
 
     const title = formData.get("title") as string;
+    const slug = formData.get("slug") as string;
+    const tagline = formData.get("tagline") as string;
     const description = formData.get("description") as string;
+    const category = formData.get("category") as string;
+    const background = formData.get("background") as string;
+    const solution = formData.get("solution") as string;
+    const challenge = formData.get("challenge") as string;
+    const businessImpact = formData.get("businessImpact") as string | null;
     const githubUrl = formData.get("githubUrl") as string;
     const liveUrl = formData.get("liveUrl") as string;
+    const features = JSON.parse(formData.get("features") as string || "[]");
+    const libraries = JSON.parse(formData.get("libraries") as string || "[]");
     const skillId = JSON.parse(formData.get("skillId") as string || "[]") as string[];
 
-    // Array string parse
-    const feature = JSON.parse(formData.get("feature") as string || "[]");
-    const technology = JSON.parse(formData.get("technology") as string || "[]");
-
-    // File upload: thumbnail (single)
     let thumbnailUrl = "";
     const thumbnailFile = formData.get("thumbnail") as File | null;
     if (thumbnailFile && typeof thumbnailFile.arrayBuffer === "function") {
       thumbnailUrl = await saveFile(thumbnailFile, "thumbnail");
     }
 
-    // File upload: photo (multiple)
-    let photoUrls: string[] = [];
-    const photoFiles = formData.getAll("photo") as File[];
-    if (photoFiles && photoFiles.length > 0) {
-      photoUrls = await Promise.all(
-        photoFiles
+    let galleryUrls: string[] = [];
+    const galleryFiles = formData.getAll("gallery") as File[];
+    if (galleryFiles && galleryFiles.length > 0) {
+      galleryUrls = await Promise.all(
+        galleryFiles
           .filter(file => typeof file.arrayBuffer === "function")
-          .map(file => saveFile(file, "photos"))
+          .map(file => saveFile(file, "gallery")) // Simpan di folder 'gallery'
       );
     }
 
-    // Insert ke DB
     const project = await db.project.create({
       data: {
         title,
+        slug,
+        tagline,
         description,
-        feature,
-        technology,
+        category,
+        features,       
+        libraries,      
+        background,     
+        solution,       
+        challenge,      
+        businessImpact, 
         githubUrl,
         liveUrl,
         thumbnail: thumbnailUrl,
-        photo: photoUrls,
+        gallery: galleryUrls, 
         Skills: {
           connect: skillId?.map((id: string) => ({ id })) || []
         }

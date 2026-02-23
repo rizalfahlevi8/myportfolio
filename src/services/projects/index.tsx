@@ -13,31 +13,47 @@ export const getProjects = async (): Promise<Project[]> => {
 // POST: Add new project
 type PostProjectPayload = {
   data: ProjectFormValues;
-  thumbnail?: File | null;  // ✅ Ubah dari thumbnailFile ke thumbnail
-  photos?: File[];          // ✅ Ubah dari photoFiles ke photos
+  thumbnail?: File | null;
+  galleryFiles?: File[]; // Diubah: photos -> galleryFiles
 };
 
 export const postProject = async ({
   data,
-  thumbnail,              // ✅ Ubah dari thumbnailFile ke thumbnail
-  photos = [],            // ✅ Ubah dari photoFiles ke photos
+  thumbnail,
+  galleryFiles = [], // Diubah: photos -> galleryFiles
 }: PostProjectPayload): Promise<Project> => {
   const formData = new FormData();
 
+  // --- Basic Fields ---
   formData.append("title", data.title);
+  formData.append("slug", data.slug); // Ditambahkan
+  formData.append("tagline", data.tagline); // Ditambahkan
   formData.append("description", data.description);
-  formData.append("feature", JSON.stringify(data.feature));
-  formData.append("technology", JSON.stringify(data.technology));
+  formData.append("category", data.category); // Ditambahkan
+  formData.append("background", data.background); // Ditambahkan
+  formData.append("solution", data.solution); // Ditambahkan
+  formData.append("challenge", data.challenge); // Ditambahkan
+  formData.append("businessImpact", data.businessImpact ?? ""); // Ditambahkan
+
+  // --- Array Fields ---
+  formData.append("features", JSON.stringify(data.features)); // Diubah: feature -> features
+  formData.append("libraries", JSON.stringify(data.libraries)); // Diubah: technology -> libraries
+
+  // --- URLs ---
   formData.append("githubUrl", data.githubUrl ?? "");
   formData.append("liveUrl", data.liveUrl ?? "");
+  
+  // --- Relations ---
   formData.append("skillId", JSON.stringify(data.skillId ?? []));
 
-  if (thumbnail) {                    // ✅ Ubah dari thumbnailFile ke thumbnail
+  // --- File Uploads ---
+  if (thumbnail) {
     formData.append("thumbnail", thumbnail);
   }
 
-  if (photos.length > 0) {           // ✅ Ubah dari photoFiles ke photos
-    photos.forEach((file) => formData.append("photo", file));
+  // Diubah: key 'photo' -> 'gallery'
+  if (galleryFiles.length > 0) {
+    galleryFiles.forEach((file) => formData.append("gallery", file));
   }
 
   const res = await axiosFetcher<Project>("post", PATH_API_NEXT_PROJECT, formData);
@@ -52,12 +68,12 @@ export const postProject = async ({
 // PUT: Update project
 type PutProjectPayload = {
   projectId: string;
-  updateData: {           // ✅ Wrap semua properti dalam updateData
+  updateData: {
     data: ProjectFormValues;
     thumbnailFile?: File | null;
-    photoFiles?: File[];
-    existingPhotos?: string[];
-    deletedPhotos?: string[];
+    galleryFiles?: File[];       // Diubah: photoFiles -> galleryFiles
+    existingGallery?: string[];  // Diubah: existingPhotos -> existingGallery
+    deletedGallery?: string[];   // Diubah: deletedPhotos -> deletedGallery
     thumbnailDeleted?: boolean;
     oldThumbnail?: string;
   };
@@ -65,37 +81,48 @@ type PutProjectPayload = {
 
 export const putProject = async ({
   projectId,
-  updateData,             // ✅ Terima sebagai updateData
+  updateData,
 }: PutProjectPayload): Promise<Project> => {
   const {
     data,
     thumbnailFile,
-    photoFiles = [],
-    existingPhotos = [],
-    deletedPhotos = [],
+    galleryFiles = [],       // Diubah
+    existingGallery = [],    // Diubah
+    deletedGallery = [],     // Diubah
     thumbnailDeleted = false,
     oldThumbnail = "",
-  } = updateData;         // ✅ Destructure dari updateData
+  } = updateData;
 
   const formData = new FormData();
 
+  // --- Basic Fields ---
   formData.append("title", data.title);
+  formData.append("slug", data.slug); // Ditambahkan
+  formData.append("tagline", data.tagline); // Ditambahkan
   formData.append("description", data.description);
-  
-  // Menyertakan logika filter yang ada di store sebelumnya
+  formData.append("category", data.category); // Ditambahkan
+  formData.append("background", data.background); // Ditambahkan
+  formData.append("solution", data.solution); // Ditambahkan
+  formData.append("challenge", data.challenge); // Ditambahkan
+  formData.append("businessImpact", data.businessImpact ?? ""); // Ditambahkan
+
+  // --- Array Fields ---
+  // Menyertakan logika filter
   formData.append(
-    "feature",
-    JSON.stringify(data.feature.filter((desc) => desc.trim() !== ""))
+    "features",
+    JSON.stringify(data.features.filter((desc) => desc.trim() !== ""))
   );
   formData.append(
-    "technology",
-    JSON.stringify(data.technology.filter((desc) => desc.trim() !== ""))
+    "libraries",
+    JSON.stringify(data.libraries.filter((desc) => desc.trim() !== ""))
   );
-  
+
+  // --- URLs ---
   formData.append("githubUrl", data.githubUrl ?? "");
   formData.append("liveUrl", data.liveUrl ?? "");
   formData.append("skillId", JSON.stringify(data.skillId ?? []));
 
+  // --- Thumbnail Logic ---
   formData.append("oldThumbnail", oldThumbnail);
 
   if (thumbnailFile) {
@@ -104,14 +131,18 @@ export const putProject = async ({
     formData.append("thumbnailDeleted", "true");
   }
 
-  formData.append("oldPhotos", JSON.stringify(existingPhotos));
+  // --- Gallery Logic ---
+  // Diubah: key 'oldPhotos' -> 'oldGallery'
+  formData.append("oldGallery", JSON.stringify(existingGallery));
 
-  if (photoFiles.length > 0) {
-    photoFiles.forEach((file) => formData.append("photo", file));
+  // Diubah: key 'photo' -> 'gallery'
+  if (galleryFiles.length > 0) {
+    galleryFiles.forEach((file) => formData.append("gallery", file));
   }
 
-  if (deletedPhotos.length > 0) {
-    formData.append("deletedPhotos", JSON.stringify(deletedPhotos));
+  // Diubah: key 'deletedPhotos' -> 'deletedGallery'
+  if (deletedGallery.length > 0) {
+    formData.append("deletedGallery", JSON.stringify(deletedGallery));
   }
 
   const res = await axiosFetcher<Project>(

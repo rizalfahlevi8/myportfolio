@@ -15,7 +15,7 @@ import NextImage from "next/image";
 import ReactSelect from "react-select";
 import toast from "react-hot-toast";
 import { axiosFetcher } from "@/lib/axios/axiosFetcher";
-import { PATH_API_NEXT_SKILL } from "@/constants/routes/pages/menu/configuration"; // Pastikan path ini sesuai
+import { PATH_API_NEXT_SKILL } from "@/constants/routes/pages/menu/configuration";
 
 // --- Helper Validator untuk TanStack Form ---
 const createZodValidator = (schema: z.ZodType<any>) => {
@@ -29,7 +29,7 @@ const createZodValidator = (schema: z.ZodType<any>) => {
 };
 
 interface AddProjectDialogProps {
-  onAdd: (data: ProjectFormValues, thumbnail: File | null, photos: File[]) => Promise<void>;
+  onAdd: (data: ProjectFormValues, thumbnail: File | null, gallery: File[]) => Promise<void>;
   isAdding?: boolean;
 }
 
@@ -38,13 +38,13 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
   
   // File states (dipisahkan dari form state karena menangani File object)
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
-  const [photosPreviews, setPhotosPreviews] = useState<string[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
 
   // Refs for file inputs
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const photosInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   // --- Pengambilan Data Skill dengan TanStack Query ---
   const { data: skills = [], isLoading: isLoadingSkills } = useQuery({
@@ -53,20 +53,26 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
       const res = await axiosFetcher<any[]>("get", PATH_API_NEXT_SKILL);
       return res.data ?? [];
     },
-    enabled: isOpen, // Hanya fetch saat dialog terbuka
+    enabled: isOpen, 
   });
 
-  // --- TanStack Form Setup ---
   const form = useForm({
     defaultValues: {
       title: "",
+      slug: "",
+      tagline: "",
       description: "",
-      feature: [""],
-      technology: [""],
+      category: "",
+      features: [""],       
+      libraries: [""],      
+      background: "",
+      solution: "",
+      challenge: "",
+      businessImpact: "",
       githubUrl: "",
       liveUrl: "",
       skillId: [],
-    } as Omit<ProjectFormValues, 'thumbnail' | 'photo'> & { skillId: string[] },
+    } as Omit<ProjectFormValues, 'thumbnail' | 'gallery'> & { skillId: string[] },
     onSubmit: async ({ value }) => {
       await handleAdd(value);
     },
@@ -82,13 +88,13 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
   const resetForm = () => {
     form.reset();
     setThumbnailFile(null);
-    setPhotoFiles([]);
+    setGalleryFiles([]);
     if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
-    photosPreviews.forEach(url => URL.revokeObjectURL(url));
+    galleryPreviews.forEach(url => URL.revokeObjectURL(url));
     setThumbnailPreview("");
-    setPhotosPreviews([]);
+    setGalleryPreviews([]);
     if (thumbnailInputRef.current) thumbnailInputRef.current.value = "";
-    if (photosInputRef.current) photosInputRef.current.value = "";
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
   const handleAdd = async (formData: any) => {
@@ -97,27 +103,27 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
       toast.error("Thumbnail harus diupload!");
       return;
     }
-    if (photoFiles.length === 0) {
+    if (galleryFiles.length === 0) {
       toast.error("Minimal satu foto harus diupload!");
       return;
     }
 
     // Filter array kosong
-    const filteredFeatures = formData.feature.filter((f: string) => f.trim() !== "");
-    const filteredTechnologies = formData.technology.filter((t: string) => t.trim() !== "");
+    const filteredFeatures = formData.features.filter((f: string) => f.trim() !== "");
+    const filteredLibraries = formData.libraries.filter((l: string) => l.trim() !== "");
 
     // Siapkan payload untuk dikirim ke parent/server action
     const payload: ProjectFormValues = {
       ...formData,
-      feature: filteredFeatures,
-      technology: filteredTechnologies,
-      thumbnail: "placeholder-thumbnail", // Placeholder untuk validasi schema
-      photo: photoFiles.map((_, i) => `placeholder-photo-${i}`), // Placeholder
+      features: filteredFeatures,
+      libraries: filteredLibraries,
+      thumbnail: "placeholder-thumbnail",
+      gallery: galleryFiles.map((_, i) => `placeholder-gallery-${i}`),
       skillId: formData.skillId ?? [],
     };
 
     try {
-      await onAdd(payload, thumbnailFile, photoFiles);
+      await onAdd(payload, thumbnailFile, galleryFiles);
       setIsOpen(false);
       resetForm();
       toast.success("Proyek berhasil ditambahkan!");
@@ -137,21 +143,21 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
     }
   };
 
-  const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       const fileArray = Array.from(files);
-      setPhotoFiles(prev => [...prev, ...fileArray]);
+      setGalleryFiles(prev => [...prev, ...fileArray]);
       fileArray.forEach(file => {
-        setPhotosPreviews(prev => [...prev, URL.createObjectURL(file)]);
+        setGalleryPreviews(prev => [...prev, URL.createObjectURL(file)]);
       });
     }
   };
 
-  const removePhoto = (index: number) => {
-    URL.revokeObjectURL(photosPreviews[index]);
-    setPhotoFiles(prev => prev.filter((_, i) => i !== index));
-    setPhotosPreviews(prev => prev.filter((_, i) => i !== index));
+  const removeGalleryItem = (index: number) => {
+    URL.revokeObjectURL(galleryPreviews[index]);
+    setGalleryFiles(prev => prev.filter((_, i) => i !== index));
+    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const removeThumbnail = () => {
@@ -188,20 +194,95 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
             }}
             className="space-y-6"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               
               {/* Title Field */}
-              <div className="lg:col-span-full">
+              <div className="md:col-span-2">
                 <form.Field
                   name="title"
                   validators={{ onChange: createZodValidator(projectSchema.shape.title) }}
                 >
                   {(field) => (
                     <div className="space-y-2">
-                      <Label className="uppercase text-sm font-semibold text-gray-700">Title *</Label>
+                      <Label className="uppercase text-xs font-bold text-gray-700">Title *</Label>
                       <Input
                         type="text"
-                        placeholder="Ex: System Monitoring Dashboard"
+                        placeholder="Ex: E-Commerce Platform"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        disabled={isAdding}
+                      />
+                      {field.state.meta.errors.length > 0 && (
+                        <p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>
+                      )}
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+
+              {/* Slug Field - Full Width */}
+              <div className="md:col-span-2">
+                <form.Field
+                  name="slug"
+                  validators={{ onChange: createZodValidator(projectSchema.shape.slug) }}
+                >
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label className="uppercase text-xs font-bold text-gray-700">Slug *</Label>
+                      <Input
+                        type="text"
+                        placeholder="Ex: e-commerce-platform"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        disabled={isAdding}
+                      />
+                      {field.state.meta.errors.length > 0 && (
+                        <p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>
+                      )}
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+
+              {/* Tagline Field - Full Width */}
+              <div className="md:col-span-2">
+                <form.Field
+                  name="tagline"
+                  validators={{ onChange: createZodValidator(projectSchema.shape.tagline) }}
+                >
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label className="uppercase text-xs font-bold text-gray-700">Tagline *</Label>
+                      <Input
+                        type="text"
+                        placeholder="Ex: Platform jual beli terpercaya"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        disabled={isAdding}
+                      />
+                      {field.state.meta.errors.length > 0 && (
+                        <p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>
+                      )}
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+
+              {/* Category Field - Full Width */}
+              <div className="md:col-span-2">
+                <form.Field
+                  name="category"
+                  validators={{ onChange: createZodValidator(projectSchema.shape.category) }}
+                >
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label className="uppercase text-xs font-bold text-gray-700">Category *</Label>
+                      <Input
+                        type="text"
+                        placeholder="Ex: Web App, Mobile, UI/UX"
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
                         onBlur={field.handleBlur}
@@ -216,16 +297,16 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
               </div>
 
               {/* Description Field */}
-              <div className="lg:col-span-full">
+              <div className="md:col-span-2">
                 <form.Field
                   name="description"
                   validators={{ onChange: createZodValidator(projectSchema.shape.description) }}
                 >
                   {(field) => (
                     <div className="space-y-2">
-                      <Label className="uppercase text-sm font-semibold text-gray-700">Description *</Label>
+                      <Label className="uppercase text-xs font-bold text-gray-700">Description *</Label>
                       <Textarea
-                        placeholder="Ex: This project aims to create a system monitoring dashboard..."
+                        placeholder="Ex: This project aims to create..."
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
                         onBlur={field.handleBlur}
@@ -239,10 +320,53 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                 </form.Field>
               </div>
 
-              {/* Feature Fields (Dynamic Array) */}
-              <div className="lg:col-span-full">
-                <Label className="uppercase text-sm font-semibold text-gray-700 mb-3 block">Feature *</Label>
-                <form.Field name="feature">
+              {/* Background, Solution, Challenge Fields - Stacked Vertically (Tanpa Grid) */}
+              <div className="md:col-span-2 space-y-4">
+                <form.Field name="background" validators={{ onChange: createZodValidator(projectSchema.shape.background) }}>
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label className="uppercase text-xs font-bold text-gray-700">Background *</Label>
+                      <Textarea placeholder="Project background..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
+                      {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
+                    </div>
+                  )}
+                </form.Field>
+                <form.Field name="solution" validators={{ onChange: createZodValidator(projectSchema.shape.solution) }}>
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label className="uppercase text-xs font-bold text-gray-700">Solution *</Label>
+                      <Textarea placeholder="Project solution..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
+                      {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
+                    </div>
+                  )}
+                </form.Field>
+                <form.Field name="challenge" validators={{ onChange: createZodValidator(projectSchema.shape.challenge) }}>
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label className="uppercase text-xs font-bold text-gray-700">Challenge *</Label>
+                      <Textarea placeholder="Project challenge..." value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
+                      {field.state.meta.errors.length > 0 && (<p className="text-sm text-red-500">{field.state.meta.errors[0]}</p>)}
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+
+              {/* Business Impact (Optional) */}
+               <div className="md:col-span-2">
+                <form.Field name="businessImpact">
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label className="uppercase text-xs font-bold text-gray-700">Business Impact (Optional)</Label>
+                      <Textarea placeholder="Impact to business..." value={field.state.value ?? ""} onChange={(e) => field.handleChange(e.target.value)} disabled={isAdding} />
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+
+              {/* Features Fields (Dynamic Array) */}
+              <div className="md:col-span-2">
+                <Label className="uppercase text-xs font-bold text-gray-700 mb-3 block">Features *</Label>
+                <form.Field name="features">
                   {(field) => (
                     <div className="space-y-3">
                       {field.state.value.map((_, index) => (
@@ -291,17 +415,17 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                 </form.Field>
               </div>
 
-              {/* Technology Fields (Dynamic Array) */}
-              <div className="lg:col-span-full">
-                <Label className="uppercase text-sm font-semibold text-gray-700 mb-3 block">Technology *</Label>
-                <form.Field name="technology">
+              {/* Libraries Fields (Dynamic Array) */}
+              <div className="md:col-span-2">
+                <Label className="uppercase text-xs font-bold text-gray-700 mb-3 block">Libraries *</Label>
+                <form.Field name="libraries">
                   {(field) => (
                     <div className="space-y-3">
                       {field.state.value.map((_, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <div className="flex-1">
                             <Input
-                              placeholder={`Technology ${index + 1}`}
+                              placeholder={`Library ${index + 1}`}
                               value={field.state.value[index]}
                               onChange={(e) => {
                                 const newVal = [...field.state.value];
@@ -336,7 +460,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                         disabled={isAdding}
                       >
                         <Plus className="h-4 w-4 mr-2" />
-                        Tambah Technology
+                        Tambah Library
                       </Button>
                     </div>
                   )}
@@ -344,8 +468,8 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
               </div>
 
               {/* Thumbnail Upload */}
-              <div className="lg:col-span-full">
-                <Label className="uppercase text-sm font-semibold text-gray-700">Thumbnail *</Label>
+              <div className="md:col-span-1">
+                <Label className="uppercase text-xs font-bold text-gray-700">Thumbnail *</Label>
                 <div className="mt-2">
                   <div className="flex items-center gap-4">
                     <input
@@ -364,10 +488,10 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                       className="flex items-center gap-2"
                     >
                       <Upload className="h-4 w-4" />
-                      Choose Thumbnail
+                      Choose
                     </Button>
                     {thumbnailFile && (
-                      <span className="text-sm text-gray-600">{thumbnailFile.name}</span>
+                      <span className="text-sm text-gray-600 truncate max-w-[100px]">{thumbnailFile.name}</span>
                     )}
                   </div>
                   {thumbnailPreview && (
@@ -397,50 +521,50 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                 </div>
               </div>
 
-              {/* Photos Upload */}
-              <div className="lg:col-span-full">
-                <Label className="uppercase text-sm font-semibold text-gray-700">Photos *</Label>
+              {/* Gallery Upload */}
+              <div className="md:col-span-1">
+                <Label className="uppercase text-xs font-bold text-gray-700">Gallery *</Label>
                 <div className="mt-2">
                   <div className="flex items-center gap-4">
                     <input
-                      ref={photosInputRef}
+                      ref={galleryInputRef}
                       type="file"
                       accept="image/*"
                       multiple
-                      onChange={handlePhotosChange}
+                      onChange={handleGalleryChange}
                       className="hidden"
                       disabled={isAdding}
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => photosInputRef.current?.click()}
+                      onClick={() => galleryInputRef.current?.click()}
                       disabled={isAdding}
                       className="flex items-center gap-2"
                     >
                       <Image className="h-4 w-4" />
-                      Choose Photos
+                      Choose
                     </Button>
-                    {photoFiles.length > 0 && (
-                      <span className="text-sm text-gray-600">{photoFiles.length} file(s) selected</span>
+                    {galleryFiles.length > 0 && (
+                      <span className="text-sm text-gray-600">{galleryFiles.length} file(s)</span>
                     )}
                   </div>
-                  <div className="mt-4 grid grid-cols-3 gap-4">
-                    {photosPreviews.map((preview, index) => (
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {galleryPreviews.map((preview, index) => (
                       <div key={index} className="relative">
                         <NextImage
                           src={preview}
-                          alt={`Photo preview ${index + 1}`}
+                          alt={`Gallery preview ${index + 1}`}
                           width={300}
                           height={96}
-                          className="w-full h-24 object-cover rounded-lg border"
+                          className="w-full h-20 object-cover rounded-lg border"
                         />
                         <Button
                           type="button"
                           variant="destructive"
                           size="icon"
-                          className="absolute -top-2 -right-2 h-6 w-6"
-                          onClick={() => removePhoto(index)}
+                          className="absolute -top-2 -right-2 h-5 w-5"
+                          onClick={() => removeGalleryItem(index)}
                           disabled={isAdding}
                         >
                           <X className="h-3 w-3" />
@@ -448,18 +572,18 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                       </div>
                     ))}
                   </div>
-                  {photoFiles.length === 0 && (
+                  {galleryFiles.length === 0 && (
                     <p className="text-sm font-medium text-destructive mt-2">At least one photo is required</p>
                   )}
                 </div>
               </div>
 
-              {/* Skills Selection (ReactSelect Tanpa ClientOnly) */}
-              <div className="lg:col-span-full">
+              {/* Skills Selection */}
+              <div className="md:col-span-2">
                 <form.Field name="skillId">
                   {(field) => (
                     <div className="space-y-2">
-                      <Label className="uppercase text-sm font-semibold text-gray-700">Related Skills</Label>
+                      <Label className="uppercase text-xs font-bold text-gray-700">Related Skills</Label>
                       <ReactSelect<{ label: string; value: string; icon: string }, true>
                         isMulti
                         options={skills.map(skill => ({
@@ -479,12 +603,12 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                         }}
                         formatOptionLabel={(option) => (
                           <span className="flex items-center gap-2">
-                            <i className={`${option.icon} text-2xl`} />
+                            <i className={`${option.icon} text-lg`} />
                             {option.label}
                           </span>
                         )}
                         isDisabled={isAdding || isLoadingSkills}
-                        classNamePrefix="react-select" // Opsional: untuk styling
+                        classNamePrefix="react-select"
                       />
                     </div>
                   )}
@@ -492,14 +616,14 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
               </div>
 
               {/* Github & Live URL */}
-              <div className="lg:col-span-full">
-                <form.Field name="githubUrl">
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <form.Field name="githubUrl">
                   {(field) => (
                     <div className="space-y-2">
-                      <Label className="uppercase text-sm font-semibold text-gray-700">GitHub URL</Label>
+                      <Label className="uppercase text-xs font-bold text-gray-700">GitHub URL</Label>
                       <Input
                         type="text"
-                        placeholder="Ex: https://github.com/your-repo (optional)"
+                        placeholder="https://github.com/..."
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
                         disabled={isAdding}
@@ -507,16 +631,13 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
                     </div>
                   )}
                 </form.Field>
-              </div>
-
-              <div className="lg:col-span-full">
                 <form.Field name="liveUrl">
                   {(field) => (
                     <div className="space-y-2">
-                      <Label className="uppercase text-sm font-semibold text-gray-700">Live URL</Label>
+                      <Label className="uppercase text-xs font-bold text-gray-700">Live URL</Label>
                       <Input
                         type="text"
-                        placeholder="Ex: https://your-live-url.com (optional)"
+                        placeholder="https://live-url.com"
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
                         disabled={isAdding}
@@ -528,7 +649,7 @@ export default function AddProjectDialog({ onAdd, isAdding = false }: AddProject
 
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-2 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"

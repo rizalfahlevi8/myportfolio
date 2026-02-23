@@ -43,16 +43,16 @@ export const ProjectsSection = ({ home }: ProjectSectionProps) => {
                   </div>
 
                   <ul className="flex flex-col gap-4 mt-4 md:mt-5">
-                    {project.technology.slice(0, 2).map((technology, index) => (
+                    {project.libraries.slice(0, 2).map((libraries, index) => (
                       <li key={index} className="flex gap-2 text-sm md:text-base text-black/50">
                         <CheckCircleIcon className="size-5 md:size-6" />
-                        <span>{technology}</span>
+                        <span>{libraries}</span>
                       </li>
                     ))}
-                    {project.technology.length > 2 && (
+                    {project.libraries.length > 2 && (
                       <li className="flex gap-2 text-sm md:text-base text-black/30">
                         <CheckCircleIcon className="size-5 md:size-6" />
-                        <span className="italic">and {project.technology.length - 2} more...</span>
+                        <span className="italic">and {project.libraries.length - 2} more...</span>
                       </li>
                     )}
                   </ul>
